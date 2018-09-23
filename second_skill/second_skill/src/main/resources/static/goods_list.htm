@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>商品列表</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- jquery -->
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <!-- bootstrap -->
+    <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.min.css" />
+    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+    <!-- jquery-validator -->
+    <script type="text/javascript" src="/jquery-validation/jquery.validate.min.js"></script>
+    <script type="text/javascript" src="/jquery-validation/localization/messages_zh.min.js"></script>
+    <!-- layer -->
+    <script type="text/javascript" src="/layer/layer.js"></script>
+    <!-- md5.js -->
+    <script type="text/javascript" src="/js/md5.min.js"></script>
+    <!-- common.js -->
+    <script type="text/javascript" src="/js/common.js"></script>
+    <style type="text/css">
+        html,body{
+            height:100%;
+            width:100%;
+        }
+        body{
+            background:url('/img/bg2.jpg') no-repeat;
+            background-size:100% 100%;
+        }
+        #goodslist td{
+            border-top:1px solid #39503f61;
+        }
+    </style>
+</head>
+<body>
+
+<div class="panel panel-default" style="height:100%;background-color:rgba(222,222,222,0.8)">
+  <div class="panel-heading">秒杀商品列表</div>
+  <table class="table" id="goodsList">
+  	<tr><td>商品名称</td><td>商品图片</td><td>商品原价</td><td>秒杀价</td><td>库存数量</td><td>详情</td></tr>
+  	<!--<tr  each="goods,goodsStat : ${goodsList}">
+                <td text="${goods.goodsName}"></td>  
+                <td ><img src="${goods.goodsImg}" width="100" height="100" /></td>  
+                <td text="${goods.goodsPrice}"></td>  
+                <td text="${goods.secSkillPrice}"></td>
+                <td text="${goods.stockCount}"></td>
+                &lt;!&ndash;<td><a href="'/goods_detail.htm?goodsId='+${goods.id}">详情</a></td>&ndash;&gt;
+                <td><a href="'/goods/detail2/'+${goods.id}">详情</a></td>
+    </tr>-->
+  </table>
+</div>
+<script>
+    $(function () {
+        g_showLoading();
+        $.ajax({
+            url:"/goods/list",
+            type:"GET",
+            data:{
+            },
+            success:function(data){
+                if(data.code == 0){
+                    render(data.data);
+                    layer.closeAll();
+                }else{
+                    if(data.code == 500102){
+                        window.location.href = "/login/view";
+                        return;
+                    }
+                    layer.msg(data.msg);
+                }
+            },
+            error:function(){
+                layer.msg("客户端请求有误");
+            }
+        })
+        
+    });
+    
+    function render(goodsList) {
+        var goodsListHtml = "";
+        for(var i =0;i<goodsList.length;i++){
+            var goodsVo = goodsList[i];
+            goodsListHtml += "<tr><td>" + goodsVo.goodsName + "</td>" +
+                "<td ><img src=\"" + goodsVo.goodsImg + "\" width=\"100\" height=\"100\" /></td> " +
+                "<td>" + goodsVo.goodsPrice + "</td>" +
+                "<td>" + goodsVo.secSkillPrice + "</td>" +
+                "<td>" + goodsVo.stockCount + "</td>" +
+                "<td><a href=\"/goods_detail.htm?goodsId=" + goodsVo.id +"\">详情</a></td>";
+        }
+
+        $("#goodsList").append(goodsListHtml);
+
+    }
+</script>
+</body>
+</html>
