@@ -1,4 +1,4 @@
-# 基于springboot实现的高并发，高可用限时秒杀系统
+# 基于springboot实现的高并发限时秒杀系统
 
 ## 系统介绍 ##
 	代码基于SpringBoot框架实现了高并发、高可用限时秒杀系统demo（inspired by immoc）。
