@@ -25,6 +25,113 @@ public class RedisService {
 
     @Autowired
     JedisCluster jedisCluster;
+	
+	 /**
+     * prefix + keyType作为大类key
+     * @param prefix 必输
+     * @param keyType 可选
+     * @param key 必输
+     * @param clazz 必输
+     * @param <T>
+     * @return
+     */
+    public <T> T hget(KeyPrefix prefix, String keyType, String key,Class<T> clazz){
+
+        if (prefix == null ||  StringUtils.isBlank(key) || clazz == null){
+            return null;
+        }
+
+        String prefixKey = prefix.getPrefix();
+
+        if (StringUtils.isNotBlank(keyType)) {
+            prefixKey = prefixKey.concat(keyType);
+        }
+
+        byte[] valByte = jedisCluster.hget(prefixKey.getBytes(), key.getBytes());
+        String jedisStr = null;
+        if (valByte != null){
+            jedisStr = new String (valByte);
+        }
+
+        T t = stringToBean(jedisStr,clazz);
+        return t;
+    }
+
+
+    /**
+     * prefix + keyType作为大类key，有效时间针对大类key
+     * @param prefix 必输
+     * @param keyType 可选
+     * @param key 必输
+     * @param value 必输
+     * @param <T>
+     * @return
+     */
+    public <T> boolean hset(KeyPrefix prefix, String keyType, String key,T value){
+        String str = beanToString(value);
+        if(StringUtils.isBlank(str) || prefix == null || StringUtils.isBlank(key)){
+            return false;
+        }
+
+        String prefixKey = prefix.getPrefix();
+        if (StringUtils.isNotBlank(keyType)) {
+           prefixKey = prefixKey.concat(keyType);
+        }
+
+        int seconds = prefix.expireSeconds();
+        //永不失效
+        if(seconds <= 0){
+            jedisCluster.hset(prefixKey.getBytes(), key.getBytes(), str.getBytes());
+        }else {
+            //有效期为seconds秒
+            jedisCluster.hset(prefixKey.getBytes(), key.getBytes(), str.getBytes());
+            jedisCluster.expire(prefixKey.getBytes(), seconds);
+        }
+        return true;
+    }
+
+    /**
+     * 删除单个key
+     * 针对hset方法
+     * @param prefix 必输
+     * @param keyType 可选
+     * @param key 必输
+     * @return
+     */
+    public boolean hdel(KeyPrefix prefix, String keyType, String key){
+        if (StringUtils.isBlank(key) || prefix == null) {
+            return false;
+        }
+
+        String prefixKey = prefix.getPrefix();
+        if (StringUtils.isNotBlank(keyType)) {
+            prefixKey = prefixKey.concat(keyType);
+        }
+
+        long ret = jedisCluster.hdel(prefixKey.getBytes(), key.getBytes());
+        return ret > 0;
+    }
+
+    /**
+     * 删除prefix + keyType 前缀key下所有缓存
+     * 根据前缀Key清理缓存，需要使用hset方法设置缓存！
+     * @param prefix 必输
+     * @param keyType 可选
+     * @return
+     */
+    public boolean batchDel(KeyPrefix prefix, String keyType){
+        if (prefix == null) {
+            return false;
+        }
+
+        String prefixKey = prefix.getPrefix();
+        if (StringUtils.isNotBlank(keyType)) {
+            prefixKey = prefixKey .concat(keyType);
+        }
+
+        long ret = jedisCluster.del(prefixKey.getBytes());
+        return ret > 0;
+    }
 
     /**
      * 获取单个对象
@@ -49,7 +156,7 @@ public class RedisService {
         String jedisStr = jedisCluster.get(realKey);
         T t = (T) JSON.parseArray(jedisStr, clazz);
         return t;
-}
+	}
 
     /**
      * 设置单个对象到redis
