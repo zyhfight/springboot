@@ -145,7 +145,11 @@ public class RedisService {
             return true;
         }
         try{
-            jedisCluster.del(keys.toArray(new String[0]));
+			for (String key : keys) {
+				jedisCluster.del(key);
+            }
+			// "No way to dispatch this command to Redis Cluster because keys have different slots."
+            //jedisCluster.del(keys.toArray(new String[0]));
             return true;
         }catch (Exception e) {
             logger.error("redis删除KeyPrefix： {}，异常： {}", prefix, ExceptionUtils.getStackTrace(e));
